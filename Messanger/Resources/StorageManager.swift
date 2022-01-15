@@ -1,4 +1,4 @@
-//
+ //
 //  StorageManager.swift
 //  Messanger
 //
@@ -44,6 +44,18 @@ final class StorageManager {
     public enum StorageErrors: Error {
         case failedToUpload
         case failedToDownloadURL
+    }
+    
+    public typealias DownloadURLPictureComplition = ((Result<URL, Error>) -> Void)
+    public func downloadURL(for path: String, complition: @escaping DownloadURLPictureComplition) {
+        let reference = storage.child(path)
+        reference.downloadURL { url, error in
+            guard let url = url , error ==  nil else {
+                complition(.failure(StorageErrors.failedToDownloadURL))
+                return
+            }
+            complition(.success(url))
+        }
     }
     
 }

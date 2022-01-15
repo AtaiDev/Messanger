@@ -233,7 +233,7 @@ class LoginViewController: UIViewController  {
                       self? .logingFailed()
                       return
                   }
-            
+            UserDefaults.standard.setValue(email, forKey: "email")
             strongSelf.navigationController?.dismiss(animated: true)
         }
         
@@ -338,6 +338,7 @@ class LoginViewController: UIViewController  {
             else {
                 return
             }
+            UserDefaults.standard.setValue(emailAddress, forKey: "email")
             
             let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: authentication.accessToken)
             if  ((userUnwrapped.profile?.hasImage) != nil) {
@@ -407,9 +408,10 @@ extension LoginViewController: LoginButtonDelegate {
                                                                              first_name: first_name,
                                                                              last_name: last_name,
                                                                              imageURL: pictureUrl))
+                UserDefaults.standard.setValue(email, forKey: "email")
             }
         }
-        
+       
         let credantial = FacebookAuthProvider.credential(withAccessToken: token)
         firebseSigninCredential(credential: credantial)
         

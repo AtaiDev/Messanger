@@ -6,10 +6,14 @@
 //
 
 import UIKit
+import JGProgressHUD
 
 class NewConversationViewController: UIViewController {
- 
-    private var searchResults = [String]()
+    
+    private let spinner = JGProgressHUD(style: .dark)
+    private var users = [[String: String]]()
+    private var results = [[String: String]]()
+    private var hasFatched = false
     
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
@@ -26,7 +30,7 @@ class NewConversationViewController: UIViewController {
     
     private let emptyConverstionLable : UILabel = {
         let lable = UILabel()
-        lable.isHidden = false
+        lable.isHidden = true
         lable.font = .systemFont(ofSize: 21, weight: .thin)
         lable.textColor = .darkGray
         lable.textAlignment = .center
@@ -55,11 +59,6 @@ class NewConversationViewController: UIViewController {
     }
     
     // MARK: - METHODS DOWN BELOW
-    private func configureVisibilityEmptyState() {
-        tableView.isHidden.toggle()
-        emptyConverstionLable.isHidden.toggle()
-    }
-    
     @objc func dismissTapped() {
         dismiss(animated: true)
     }
@@ -98,7 +97,7 @@ extension NewConversationViewController: UITableViewDelegate, UITableViewDataSou
              }
              cell.textLabel?.textColor = .darkGray
              cell.textLabel?.font = .systemFont(ofSize: 21, weight: .light)
-             cell.textLabel?.text = searchResults[indexPath.row]
+             cell.textLabel?.text = results[indexPath.row]["name"]
              cell.accessoryType = .disclosureIndicator
              
             return cell
@@ -111,24 +110,71 @@ extension NewConversationViewController: UITableViewDelegate, UITableViewDataSou
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return searchResults.count
+        return results.count
     }
     
 }
 
 extension NewConversationViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        print("search clicked")
+        guard let querySearch = searchBar.text, !querySearch.replacingOccurrences(of: " ", with: "").isEmpty else {
+            return
+        }
+        self.spinner.show(in: view)
+        self.searchUsers(query: querySearch)
+    }
+    
+    func searchUsers(query: String) {
+        if hasFatched {
+            filterUsers(with: query)
+        }
+        else {
+            DatabaseManager.shared.fetchAllUsers { [weak self] result in
+                switch result {
+                case .success(let users):
+                    self?.hasFatched = true
+                    self?.users = users
+                    self?.filterUsers(with: query)
+                case .failure(let error):
+                    print("error accured: \(error)")
+                }
+            }
+        }
         searchBar.resignFirstResponder()
-        searchResults = ["Aliman Jojo", "Delphin Jr", "TimerLike dude"]
-        tableView.reloadData()
-        configureVisibilityEmptyState()
+    }
+    
+    func filterUsers(with term: String) {
+        guard hasFatched  else {
+            return
+        }
+        DispatchQueue.main.async {
+            self.spinner.dismiss(animated: true)
+        }
         
+        let results: [[String: String]] = self.users.filter {
+            guard let name = $0["name"]?.lowercased() else {
+                return false
+            }
+            return name.hasPrefix(term.lowercased())
+        }
+        self.results = results
+        updateUI()
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         print("search cancel clicked")
         dismissTapped()
-        configureVisibilityEmptyState()
+    }
+    
+    private func updateUI() {
+        if results.isEmpty {
+            self.emptyConverstionLable.isHidden = false
+            self.tableView.isHidden = true
+        }
+        else {
+            self.emptyConverstionLable.isHidden = true
+            self.tableView.isHidden = false
+            self.tableView.reloadData()
+        }
     }
 }
