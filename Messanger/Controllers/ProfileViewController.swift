@@ -20,7 +20,7 @@ class ProfileViewController: UIViewController {
         tableView.register(UITableViewCell.self,
                            forCellReuseIdentifier: "cell")
         tableView.register(ProfileHeaderTableView.self,
-               forHeaderFooterViewReuseIdentifier: "profile_header")
+                           forHeaderFooterViewReuseIdentifier: ProfileHeaderTableView.profileIdentifier)
         tableView.reloadData()
     }
     
@@ -45,7 +45,6 @@ class ProfileViewController: UIViewController {
                 imageView.image = image
             }
             
-            
         }.resume()
     }
     
@@ -68,7 +67,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        guard let profileHeader = tableView.dequeueReusableHeaderFooterView(withIdentifier: "profile_header") as? ProfileHeaderTableView else {
+        guard let profileHeader = tableView.dequeueReusableHeaderFooterView(withIdentifier: ProfileHeaderTableView.profileIdentifier) as? ProfileHeaderTableView else {
             return UITableViewCell()
         }
         guard let profilePicPath = getProfilePicPath() else { return  nil }
@@ -80,7 +79,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
                 print("failed error: \(error.localizedDescription)")
             }
         }
-        profileHeader.title.text = "User Name"
+        profileHeader.title.text = UserDefaults.standard.string(forKey: "name_show_profile")
         return profileHeader
     }
 

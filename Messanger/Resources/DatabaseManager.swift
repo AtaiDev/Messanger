@@ -46,7 +46,7 @@ extension DatabaseManager {
                 complition(false)
                 return
             }
-            
+            UserDefaults.standard.set(appUser.firstName + " " + appUser.lastName, forKey: "name_show_profile")
             strongSelf.database.child("users").observeSingleEvent(of: .value) { snapshot in
                 if var usersCollection = snapshot.value as? [ [String: String] ]  {
                     // append to user collection
