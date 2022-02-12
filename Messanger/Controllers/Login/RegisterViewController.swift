@@ -190,7 +190,7 @@ class RegisterViewController: UIViewController {
                     }
                     
                 } )
-                
+                UserDefaults.standard.set(email, forKey: "email")
                 strongSelf.navigationController?.dismiss(animated: true, completion: nil)
             }
 

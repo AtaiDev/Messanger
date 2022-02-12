@@ -10,10 +10,13 @@ import JGProgressHUD
 
 class NewConversationViewController: UIViewController {
     
+    
     private let spinner = JGProgressHUD(style: .dark)
     private var users = [[String: String]]()
     private var results = [[String: String]]()
     private var hasFatched = false
+    
+    public var complition: (([String : String]) -> (Void))?
     
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
@@ -85,7 +88,6 @@ class NewConversationViewController: UIViewController {
 
     }
 
-    
 }
 // MARK: - ECTENSIONS DOWN BELOW
 extension NewConversationViewController: UITableViewDelegate, UITableViewDataSource {
@@ -107,6 +109,11 @@ extension NewConversationViewController: UITableViewDelegate, UITableViewDataSou
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        let targetUser = results[indexPath.row]
+        dismiss(animated: true) { [weak self] in
+            self?.complition?(targetUser)
+        }
+        
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

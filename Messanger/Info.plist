@@ -25,6 +25,8 @@
 	<string>My Messenger</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
+        <key>FacebookAutoLogAppEventsEnabled</key>
+        <true/>
 		<string>fbapi</string>
 		<string>fb-messenger-share-api</string>
 		<string>fbauth2</string>

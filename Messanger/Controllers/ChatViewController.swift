@@ -7,6 +7,7 @@
 
 import UIKit
 import MessageKit
+import InputBarAccessoryView
 
 public struct Sender: SenderType {
     var photoURL: String
@@ -21,37 +22,172 @@ public struct Message: MessageType {
     public var kind: MessageKind
 }
 
+extension MessageKind {
+    /// discribes the types of the choosen message
+    var messageKindString: String {
+        switch self {
+        case .text(let string):
+            return "text \(string)"
+        case .attributedText(let nSAttributedString):
+            return "attributed_text \(nSAttributedString)"
+        case .photo(let mediaItem):
+            return "photo \(mediaItem)"
+        case .video(let mediaItem):
+            return "video \(mediaItem)"
+        case .location(let locationItem):
+            return "location \(locationItem)"
+        case .emoji(let string):
+            return "emoji \(string)"
+        case .audio(let audioItem):
+            return "audio \(audioItem)"
+        case .contact(let contactItem):
+            return "contact \(contactItem)"
+        case .linkPreview(let linkItem):
+            return "linkPreview \(linkItem)"
+        case .custom(let optional):
+            return "custom \(optional)"
+        }
+    }
+    
+}
+
 class ChatViewController: MessagesViewController {
   
+    public static let dateFormatter: DateFormatter = {
+        let date = DateFormatter()
+        date.dateStyle = .medium
+        date.timeStyle = .long
+        date.locale = .current
+        return date
+    }()
+    
+    public let otherUserEmail: String
+    private let conversationID: String?
+    public var isNewConversation = false
+    
     private var messages = [Message]()
-    let selfSender = Sender(photoURL: "",
-                            senderId: "1",
-                            displayName: "Gang")
+    private var selfSender: Sender? {
+        guard let email = UserDefaults.standard.value(forKey: "email") as? String else {
+            return nil
+        }
+        
+        let safeSenderEmail = DatabaseManager.safeEmail(emailAddress: email)
+        
+        return Sender(photoURL: "",
+               senderId: safeSenderEmail,
+               displayName: "Me")
+        
+    }
+    
+    init( with email: String, id: String?) {
+        self.conversationID = id
+        self.otherUserEmail = email
+        super.init(nibName: nil, bundle: nil)
+        if let conversationID = conversationID {
+            startListeningMessages(withID: conversationID)
+        }
+        
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        
-      
-        messagesCollectionView.messagesLayoutDelegate = self
-        messagesCollectionView.messagesDisplayDelegate = self
-        messagesCollectionView.messagesDataSource = self
-    
-        messages.append( Message(sender: selfSender,
-                                 messageId: "123",
-                                 sentDate: Date(),
-                                 kind: .text("NOTE: If you look closely at the implementation of the messageForItem method you'll see that we use the indexPath.section to retrieve our MessageType from the array as opposed to the traditional indexPath.row property. This is because the default behavior of MessageKit is to put each MessageType is in its own section of the MessagesCollectionView.") ))
-        messages.append( Message(sender: selfSender,
-                                 messageId: "123",
-                                 sentDate: Date(),
-                                 kind: .text("What the fuck man?") ))
-
+       messagesCollectionView.messagesLayoutDelegate = self
+       messagesCollectionView.messagesDisplayDelegate = self
+       messagesCollectionView.messagesDataSource = self
+       messageInputBar.delegate = self
     }
-  
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        messageInputBar.inputTextView.becomeFirstResponder()
+        
+    }
+    
+    func startListeningMessages(withID conversationID: String) {
+        DatabaseManager.shared.getAllMessagesForConversation(with: conversationID) { [weak self] result in
+            switch result {
+            case .success(let messages):
+                guard !messages.isEmpty else {
+                    return
+                }
+                
+                self?.messages = messages
+                DispatchQueue.main.async {
+                    self?.messagesCollectionView.reloadDataAndKeepOffset()
+                }
+            case .failure(let error):
+                print("failed to fetch messages \(error.localizedDescription)")
+            }
+        }
+    }
+
+}
+
+extension ChatViewController: InputBarAccessoryViewDelegate {
+    
+    func inputBar(_ inputBar: InputBarAccessoryView, didPressSendButtonWith text: String) {
+        guard !text.replacingOccurrences(of: " ", with: "").isEmpty,
+        let selfSender = selfSender,
+        let messageId = createMessageIdRandomizer() else {
+            return
+        }
+        
+        print("sending: \(text)")
+        
+        if isNewConversation {
+            // create new convo data
+            
+            let message = Message(sender: selfSender,
+                                  messageId: messageId,
+                                  sentDate: Date(),
+                                  kind: .text(text))
+            DatabaseManager.shared.creatNewConversation(with: otherUserEmail, name: self.title ?? "User", firstMessage: message) { succsess in
+                if succsess {
+                    print("message sent \(message)")
+                }
+                else {
+                    print("Failed to send message")
+                }
+            }
+        }
+        else {
+            // appand to existing convo
+              
+        }
+    }
+    
+   private func createMessageIdRandomizer() -> String? {
+       guard let currentUserEmail = UserDefaults.standard.value(forKey: "email") as? String  else {
+           return nil
+       }
+       let dateString = Self.dateFormatter.string(from: Date())
+       
+       let currentSafeEmail = DatabaseManager.safeEmail(emailAddress: currentUserEmail)
+       let newIdentifier = "\(otherUserEmail)_\(currentSafeEmail)_\(dateString)"
+       print("created randomized identifier: \(newIdentifier)")
+       return newIdentifier
+    }
+    
+    func detectorAttributes(for detector: DetectorType, and message: MessageType, at indexPath: IndexPath) -> [NSAttributedString.Key : Any] {
+        switch detector {
+             case .hashtag, .mention: return [.foregroundColor: UIColor.blue]
+             default: return MessageLabel.defaultAttributes
+             }
+    }
+    
 }
 
 extension ChatViewController:  MessagesDataSource, MessagesDisplayDelegate, MessagesLayoutDelegate {
     func currentSender() -> SenderType {
-        return selfSender
+        if let sender = selfSender {
+            return sender
+        }
+        fatalError("Self sender is nil, email shoud be provided and saved locally")
     }
     
     func messageForItem(at indexPath: IndexPath, in messagesCollectionView: MessagesCollectionView) -> MessageType {
