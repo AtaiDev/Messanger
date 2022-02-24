@@ -32,6 +32,12 @@ class ConversationsViewController: UIViewController {
         return table
     }()
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        tableView.reloadData()
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .compose,
@@ -40,7 +46,9 @@ class ConversationsViewController: UIViewController {
         addsubviews()
         setupTableVeiw()
         startListeningForConversations()
+
     }
+
     
     private func startListeningForConversations() {
         
@@ -83,7 +91,7 @@ class ConversationsViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         self.userAuth()
-        
+        tableView.reloadData()
     }
     
     func userAuth() {

@@ -84,7 +84,7 @@ class ChatViewController: MessagesViewController {
         self.otherUserEmail = email
         super.init(nibName: nil, bundle: nil)
         if let conversationID = conversationID {
-            startListeningMessages(withID: conversationID)
+            startListeningMessages(withID: conversationID, shouldScrollToBottom: true)
         }
         
     }
@@ -108,17 +108,19 @@ class ChatViewController: MessagesViewController {
         
     }
     
-    func startListeningMessages(withID conversationID: String) {
+    func startListeningMessages(withID conversationID: String, shouldScrollToBottom: Bool) {
         DatabaseManager.shared.getAllMessagesForConversation(with: conversationID) { [weak self] result in
             switch result {
             case .success(let messages):
                 guard !messages.isEmpty else {
                     return
                 }
-                
                 self?.messages = messages
                 DispatchQueue.main.async {
                     self?.messagesCollectionView.reloadDataAndKeepOffset()
+                    if shouldScrollToBottom {
+                        self?.messagesCollectionView.scrollToLastItem(animated: true)
+                    }
                 }
             case .failure(let error):
                 print("failed to fetch messages \(error.localizedDescription)")
@@ -138,17 +140,16 @@ extension ChatViewController: InputBarAccessoryViewDelegate {
         }
         
         print("sending: \(text)")
-        
+        let message = Message(sender: selfSender,
+                              messageId: messageId,
+                              sentDate: Date(),
+                              kind: .text(text))
         if isNewConversation {
             // create new convo data
-            
-            let message = Message(sender: selfSender,
-                                  messageId: messageId,
-                                  sentDate: Date(),
-                                  kind: .text(text))
             DatabaseManager.shared.creatNewConversation(with: otherUserEmail, name: self.title ?? "User", firstMessage: message) { succsess in
                 if succsess {
                     print("message sent \(message)")
+                    
                 }
                 else {
                     print("Failed to send message")
@@ -157,7 +158,20 @@ extension ChatViewController: InputBarAccessoryViewDelegate {
         }
         else {
             // appand to existing convo
-              
+            guard let conversationID = conversationID else {
+                print("failed to obtain conversationID")
+                return
+            }
+            DatabaseManager.shared.sendMessage(to: conversationID, name: self.title ?? "User", otherUserEmail: otherUserEmail,
+                                               messageParam: message) { success in
+                if success {
+                    print("message successfully uploaded and appended")
+                }
+                else {
+                    print("failed to appand other message")
+                }
+            }
+            
         }
     }
     

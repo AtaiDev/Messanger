@@ -221,6 +221,7 @@ class LoginViewController: UIViewController  {
                   return
               }
         spinner.show(in: view)
+        
         // MARK: - Firebase Log In down below
         Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
             guard let strongSelf = self else {
@@ -233,7 +234,17 @@ class LoginViewController: UIViewController  {
                       self? .logingFailed()
                       return
                   }
+            let safeEmail = DatabaseManager.safeEmail(emailAddress: email)
+            DatabaseManager.shared.getUserData(for: safeEmail) { result in
+                switch result {
+                case .success(let fullName):
+                    UserDefaults.standard.setValue(fullName, forKey: "full_name")
+                case .failure(_):
+                    print("failed to save user name locally")
+                }
+            }
             UserDefaults.standard.setValue(email, forKey: "email")
+
             strongSelf.navigationController?.dismiss(animated: true)
         }
         
@@ -338,6 +349,8 @@ class LoginViewController: UIViewController  {
             else {
                 return
             }
+            
+            UserDefaults.standard.setValue("\(first_name) \(last_name)", forKey: "full_name")
             UserDefaults.standard.setValue(emailAddress, forKey: "email")
             
             let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: authentication.accessToken)
@@ -408,6 +421,7 @@ extension LoginViewController: LoginButtonDelegate {
                                                                              first_name: first_name,
                                                                              last_name: last_name,
                                                                              imageURL: pictureUrl))
+                UserDefaults.standard.setValue("\(first_name) \(last_name)", forKey: "full_name")
                 UserDefaults.standard.setValue(email, forKey: "email")
             }
         }
