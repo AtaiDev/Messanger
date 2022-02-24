@@ -8,6 +8,7 @@
 import UIKit
 import MessageKit
 import InputBarAccessoryView
+import PhotosUI
 
 public struct Sender: SenderType {
     var photoURL: String
@@ -22,6 +23,13 @@ public struct Message: MessageType {
     public var kind: MessageKind
 }
 
+public struct Media: MediaItem {
+    public var url: URL?
+    public var image: UIImage?
+    public var placeholderImage: UIImage
+    public var size: CGSize
+}
+
 extension MessageKind {
     /// discribes the types of the choosen message
     var messageKindString: String {
@@ -30,8 +38,8 @@ extension MessageKind {
             return "text \(string)"
         case .attributedText(let nSAttributedString):
             return "attributed_text \(nSAttributedString)"
-        case .photo(let mediaItem):
-            return "photo \(mediaItem)"
+        case .photo(_):
+            return  "photo"
         case .video(let mediaItem):
             return "video \(mediaItem)"
         case .location(let locationItem):
@@ -59,6 +67,15 @@ class ChatViewController: MessagesViewController {
         date.timeStyle = .long
         date.locale = .current
         return date
+    }()
+    
+
+    
+    public  let barButton: InputBarButtonItem = {
+        let button = InputBarButtonItem()
+        button.setSize(CGSize(width: 36, height: 36), animated: false)
+        button.setImage(UIImage(systemName: "paperclip"), for: .normal)
+        return button
     }()
     
     public let otherUserEmail: String
@@ -99,13 +116,80 @@ class ChatViewController: MessagesViewController {
        messagesCollectionView.messagesLayoutDelegate = self
        messagesCollectionView.messagesDisplayDelegate = self
        messagesCollectionView.messagesDataSource = self
+        messagesCollectionView.messageCellDelegate = self
        messageInputBar.delegate = self
+        setUpBarButton()
     }
 
+    private func setUpBarButton() {
+        messageInputBar.setLeftStackViewWidthConstant(to: 36, animated: false)
+        messageInputBar.setStackViewItems([barButton], forStack: .left, animated: false)
+        barButton.onTouchUpInside { [weak self] _ in
+            self?.attachButtonClicked()
+        }
+        
+    }
+    
+    func attachButtonClicked() {
+        ImagePickerManager().pickImage(self) { [weak self] image, video  in
+            guard let photoMessageId = self?.createMessageIdRandomizer(),
+                  let conversationID = self?.conversationID,
+                  let name = self?.title,
+                  let sender = self?.selfSender
+            else { return }
+            
+            if image != nil, let imageData = image?.pngData() {
+                let fileName =  "photo_message_" + photoMessageId.replacingOccurrences(of: " ", with: "-") + ".png"
+                // Upload image
+                StorageManager.shared.uploadMessagePhoto(with: imageData, fileName: fileName ) { [weak self] result in
+                    guard let strongSelf = self else { return }
+                    switch result {
+                    case .success(let urlString):
+                        // send message here
+                        guard let url = URL(string: urlString),
+                              let placeHolder = UIImage(systemName: "photo") else {
+                                  return
+                              }
+                        
+                        let media = Media(url: url,
+                                          image: nil,
+                                          placeholderImage: placeHolder,
+                                          size: .zero)
+                        
+                        let message = Message(sender: sender ,
+                                              messageId: photoMessageId,
+                                              sentDate: Date(),
+                                              kind: .photo(media))
+                        
+                        DatabaseManager.shared.sendMessage(to: conversationID, name:  name, otherUserEmail: strongSelf.otherUserEmail, messageParam: message) { succsess in
+                            if succsess {
+                                print("photo message sent: ")
+                                
+                            } else {
+                                print("failed send photo message: ")
+                                
+                            }
+                        }
+                    case .failure(let error):
+                        print("failed to load URL \(error)")
+                    }
+                    
+                }
+            }
+            else if  video != nil {
+                let fileName =  "photo_message_" + photoMessageId.replacingOccurrences(of: " ", with: "-") + ".mov"
+                
+                
+                
+            }
+           
+        }
+    
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         messageInputBar.inputTextView.becomeFirstResponder()
-        
     }
     
     func startListeningMessages(withID conversationID: String, shouldScrollToBottom: Bool) {
@@ -212,4 +296,39 @@ extension ChatViewController:  MessagesDataSource, MessagesDisplayDelegate, Mess
         return messages.count
     }
     
+    func configureMediaMessageImageView(_ imageView: UIImageView, for message: MessageType, at indexPath: IndexPath, in messagesCollectionView: MessagesCollectionView) {
+        guard let message = message as? Message else {
+            return
+        }
+        switch message.kind {
+        case .photo(let mediaItem):
+            guard let imageURL = mediaItem.url else {
+                return
+            }
+            imageView.sd_setImage(with: imageURL, completed: nil)
+            
+        default:
+            break
+        }
+    }
+}
+
+extension ChatViewController:  MessageCellDelegate {
+    func didTapImage(in cell: MessageCollectionViewCell) {
+        guard let indexPath = messagesCollectionView.indexPath(for: cell) else {
+            return
+        }
+        
+        let message = messages[indexPath.section]
+        switch message.kind {
+        case .photo(let mediaItam):
+            guard let url = mediaItam.url else {
+                return
+            }
+            let vc = PhotoViewerViewController(with: url)
+            navigationController?.pushViewController(vc, animated: true)
+        default:
+            break
+        }
+    }
 }

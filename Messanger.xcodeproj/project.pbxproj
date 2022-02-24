@@ -15,6 +15,7 @@
 		8400ECC0278F3A28000C2ABE /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8400ECBF278F3A28000C2ABE /* StorageManager.swift */; };
 		8400ECC22791E507000C2ABE /* ProfileHeaderTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8400ECC12791E507000C2ABE /* ProfileHeaderTableView.swift */; };
 		847816CA27A857D2009BF9D6 /* ConversationTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847816C927A857D2009BF9D6 /* ConversationTableViewCell.swift */; };
+		849E0DA727BD602700115EE0 /* ImagePickerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 849E0DA627BD602700115EE0 /* ImagePickerManager.swift */; };
 		84A7CDC327820F94008A1A21 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A7CDC227820F94008A1A21 /* AppDelegate.swift */; };
 		84A7CDC527820F94008A1A21 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A7CDC427820F94008A1A21 /* SceneDelegate.swift */; };
 		84A7CDC727820F94008A1A21 /* ConversationsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A7CDC627820F94008A1A21 /* ConversationsViewController.swift */; };
@@ -39,6 +40,7 @@
 		8400ECBF278F3A28000C2ABE /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		8400ECC12791E507000C2ABE /* ProfileHeaderTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileHeaderTableView.swift; sourceTree = "<group>"; };
 		847816C927A857D2009BF9D6 /* ConversationTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationTableViewCell.swift; sourceTree = "<group>"; };
+		849E0DA627BD602700115EE0 /* ImagePickerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePickerManager.swift; sourceTree = "<group>"; };
 		84A7CDBF27820F94008A1A21 /* Messanger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Messanger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A7CDC227820F94008A1A21 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		84A7CDC427820F94008A1A21 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -84,6 +86,7 @@
 				8400ECB7278741FD000C2ABE /* TextFieldCustom.swift */,
 				8400ECC12791E507000C2ABE /* ProfileHeaderTableView.swift */,
 				847816C927A857D2009BF9D6 /* ConversationTableViewCell.swift */,
+				849E0DA627BD602700115EE0 /* ImagePickerManager.swift */,
 			);
 			path = Subclasses;
 			sourceTree = "<group>";
@@ -310,6 +313,7 @@
 				8400ECC22791E507000C2ABE /* ProfileHeaderTableView.swift in Sources */,
 				8400ECBC2788AA7E000C2ABE /* DatabaseManager.swift in Sources */,
 				8400ECBE278DDB6D000C2ABE /* ChatViewController.swift in Sources */,
+				849E0DA727BD602700115EE0 /* ImagePickerManager.swift in Sources */,
 				84A7CDE52782147F008A1A21 /* ProfileViewController.swift in Sources */,
 				84A7CDC527820F94008A1A21 /* SceneDelegate.swift in Sources */,
 				84A7CDDF27821442008A1A21 /* PhotoViewerViewController.swift in Sources */,

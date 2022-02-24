@@ -65,7 +65,14 @@ class ConversationTableViewCell: UITableViewCell {
     
     func configure(with model: Conversation) {
         userName.text = model.name
-        userLatestMessage.text = model.latestMessage.text
+        
+        if model.latestMessage.text.prefix(23) == "https://firebasestorage" {
+            userLatestMessage.font = .systemFont(ofSize: 36, weight: .light)
+            userLatestMessage.text = "🌅"
+            
+        } else {
+            userLatestMessage.text = model.latestMessage.text
+        }
         let path = "images/\(model.otherUserEmail)_profile_picture.png"
         StorageManager.shared.downloadURL(for: path) { [weak self] result in
             switch result {

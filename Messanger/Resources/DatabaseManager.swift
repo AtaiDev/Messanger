@@ -156,8 +156,9 @@ extension DatabaseManager {
                 message = messageText
             case .attributedText(_):
                 break
-            case .photo(_):
-                break
+            case .photo(let photoType):
+                guard let messageString = photoType.url?.absoluteString else { return }
+                message = messageString
             case .video(_):
                 break
             case .location(_):
@@ -261,8 +262,9 @@ extension DatabaseManager {
             message = messageText
         case .attributedText(_):
             break
-        case .photo(_):
-            break
+        case .photo(let photoType):
+            guard let messageString = photoType.url?.absoluteString else { return }
+            message = messageString
         case .video(_):
             break
         case .location(_):
@@ -362,6 +364,26 @@ extension DatabaseManager {
                           return nil
                       }
                 let safeEmail = DatabaseManager.safeEmail(emailAddress: sender_email)
+                var kind : MessageKind?
+                if type == "photo" {
+                    guard let photoURL = URL(string: content),
+                          let imageHolder = UIImage(systemName: "photo") else {
+                              return nil
+                          }
+                    let media = Media(url: photoURL,
+                                      image: nil,
+                                      placeholderImage: imageHolder,
+                                      size: CGSize(width: 300, height: 300))
+                    
+                    kind = .photo(media)
+                } else {
+                    kind = .text(content)
+                }
+                
+                guard let finalMessageKind = kind else {
+                    return nil
+                }
+
                 let sender = Sender(photoURL: "",
                                     senderId: safeEmail,
                                     displayName: name)
@@ -369,7 +391,7 @@ extension DatabaseManager {
                 return Message(sender: sender,
                                messageId: id,
                                sentDate: dateFormatted,
-                               kind: .text(content))
+                               kind: finalMessageKind )
             })
             complition(.success(messages))
         }
@@ -391,8 +413,10 @@ extension DatabaseManager {
             message = messageText
         case .attributedText(_):
             break
-        case .photo(_):
-            break
+        case .photo(let mediaItem):
+            if let targetURL = mediaItem.url?.absoluteString {
+                message = targetURL
+            }
         case .video(_):
             break
         case .location(_):

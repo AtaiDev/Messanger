@@ -19,6 +19,10 @@
 			</array>
 		</dict>
 	</array>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app requires access to the photo library.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>bla-bla-bla</string>
 	<key>FacebookAppID</key>
 	<string>4821877014501483</string>
 	<key>FacebookDisplayName</key>
